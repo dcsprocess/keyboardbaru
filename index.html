@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="operator-ui-version" content="v-final-spacing-16px">
+<meta name="operator-ui-version" content="v-final-no-duplicate-mainbutton">
 <title>Operator Input</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
@@ -266,7 +266,7 @@ if(nextBtn){nextBtn.textContent=i===params.length-1?"Review & Kirim":"Lanjut ›
 function next(){if(num()===null){state.className="state bad";state.textContent="❌ Nilai belum diisi";h("rigid");return}if(i<params.length-1){i++;render()}else{showReview(true)}}
 function back(){if(review){showReview(false);return}if(i){i--;render()}}
 function showReview(on){review=on;$("entry").style.display=on?"none":"block";$("review").classList.toggle("show",on);$("title").textContent=on?"Periksa Laporan":"Input Operator";$("reviewBtn").textContent=on?"✏️ Edit":"📋 Ringkas";
-if(on){renderList();tg?.MainButton?.setText("✅ Kirim Semua");tg?.MainButton?.show();tg?.MainButton?.enable()}else{tg?.MainButton?.setText(i===params.length-1?"📋 Review & Kirim":"Lanjut ▸");tg?.MainButton?.show();render()}}
+if(on){renderList();tg?.MainButton?.setText("✅ Kirim Semua");tg?.MainButton?.show();tg?.MainButton?.enable()}else{tg?.MainButton?.hide();render()}}
 function renderList(){const list=$("list");list.innerHTML="";params.forEach((p,j)=>{const n=num(j),r=document.createElement("div");r.className="row";r.innerHTML='<div class="name"><b>'+(j+1)+". "+p.label+'</b><span>'+p.satuan+'</span></div><div class="val">'+(n===null?"-":n)+'</div><div class="badge '+(n===null?"missing":"ready")+'">'+(n===null?"KOSONG":"SIAP")+"</div>";r.onclick=()=>{i=j;showReview(false)};list.appendChild(r)})}
 function finish(){for(let j=0;j<params.length;j++)if(num(j)===null){i=j;showReview(false);h("rigid");return}const values={};params.forEach((p,j)=>values[p.key]=String(num(j)));h("medium");tg?.sendData(JSON.stringify({action:"submit",values}))}
 $("cancel").onclick=()=>tg?.sendData(JSON.stringify({action:"cancel"}));
