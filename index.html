@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="operator-ui-version" content="v-final-dynamic-responsive">
+<meta name="operator-ui-version" content="v-final-dynamic-responsive-2">
 <title>Operator Input</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
@@ -14,7 +14,18 @@
   --hint:var(--tg-theme-hint-color,#777);
   --btn:var(--tg-theme-button-color,#2481cc);
   --btntext:var(--tg-theme-button-text-color,#fff);
-  --ok:#22a06b;--warn:#e67e00;--bad:#d93025;
+  --ok:#22a06b;--warn:#e67e00;--bad:#d93025;--bad-tint:rgba(217,48,37,.10);
+
+  /* Skala dinamis: menyesuaikan tinggi viewport perangkat (HP pendek, HP tinggi, tablet)
+     sambil menjaga target sentuh tetap nyaman (>=44px). */
+  --gap-section:clamp(10px, 2.0dvh, 18px);
+  --gap-key:clamp(8px, 1.6dvh, 14px);
+  --key-h:clamp(48px, 7.4dvh, 64px);
+  --display-h:clamp(56px, 8dvh, 70px);
+  --card-h:clamp(78px, 11dvh, 92px);
+  --nav-h:clamp(44px, 6dvh, 50px);
+  --radius-lg:clamp(16px, 2.8vw, 20px);
+  --radius-md:clamp(13px, 2.2vw, 18px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{
@@ -27,7 +38,7 @@ button{font:inherit}
 .app{
   width:100%;max-width:520px;margin:0 auto;
   min-height:100dvh;
-  padding:10px 14px calc(14px + env(safe-area-inset-bottom));
+  padding:clamp(6px,1.2dvh,12px) 14px calc(clamp(8px,1.5dvh,16px) + env(safe-area-inset-bottom));
 }
 .head{
   display:grid;grid-template-columns:auto 1fr auto;
@@ -43,7 +54,7 @@ button{font:inherit}
 .sub{text-align:center;color:var(--hint);font-size:11px;margin-top:2px}
 .progress{
   height:4px;background:var(--card);border-radius:99px;
-  overflow:hidden;margin:4px 0 10px;
+  overflow:hidden;margin:clamp(3px,.7dvh,6px) 0 clamp(7px,1.4dvh,12px);
 }
 .progress>i{
   display:block;height:100%;width:0;background:var(--btn);transition:width .2s;
@@ -51,29 +62,28 @@ button{font:inherit}
 .meta{
   display:flex;flex-wrap:wrap;gap:4px 10px;
   background:var(--card);border-radius:14px;
-  padding:8px 11px;margin-bottom:10px;
+  padding:8px 11px;margin-bottom:clamp(7px,1.4dvh,12px);
   font-size:10px;color:var(--hint);
 }
 .meta b{color:var(--text)}
 
-#entry{
-  display:flex;flex-direction:column;
-  gap:10px;
-}
+#entry{display:flex;flex-direction:column;gap:0}
+#entry>*{margin-bottom:var(--gap-section)}
+#entry>.note{margin-bottom:4px}
+#entry>.nav-buttons{margin-bottom:0}
+
 .parameter-card{
-  display:grid!important;
+  display:grid;
   grid-template-columns:minmax(0,1fr) auto;
   align-items:center;
-  min-height:86px;
-  padding:12px 14px!important;
+  height:var(--card-h);min-height:var(--card-h);
+  padding:12px 14px;
   background:var(--card);
-  border-radius:18px!important;
+  border-radius:var(--radius-lg);
+  box-shadow:0 0 0 1px rgba(128,128,128,.04);
 }
 .param-main{min-width:0}
-.label{
-  font-size:17px;font-weight:850;line-height:1.18;
-  overflow-wrap:anywhere;
-}
+.label{font-size:17px;font-weight:850;line-height:1.18;overflow-wrap:anywhere}
 .unit{font-size:10px;color:var(--hint);margin-top:4px}
 .std{font-size:10px;margin-top:5px}
 .state{font-size:11px;font-weight:800;min-height:13px;margin-top:3px}
@@ -85,56 +95,69 @@ button{font:inherit}
   border-left:1px solid rgba(128,128,128,.20);
   text-align:right;
 }
-.operator-name{
-  font-size:13px;font-weight:850;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.operator-shift{
-  margin-top:3px;font-size:10px;color:var(--hint);
-  white-space:nowrap;
-}
+.operator-name{font-size:13px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.operator-shift{margin-top:3px;font-size:10px;color:var(--hint);white-space:nowrap}
 
 .display{
-  width:100%;height:64px;flex:none;
+  width:100%;height:var(--display-h);min-height:var(--display-h);flex:none;
   display:flex;align-items:center;justify-content:center;
-  background:var(--card);border-radius:18px;
-  font-size:38px;font-weight:850;letter-spacing:.5px;
+  background:var(--card);border-radius:var(--radius-lg);
+  box-shadow:0 0 0 1px rgba(128,128,128,.04);
+  font-size:clamp(30px,8vw,38px);font-weight:850;letter-spacing:.5px;
+  font-variant-numeric:tabular-nums;
 }
 .empty{color:var(--hint);font-weight:500}
 
+/* ===== Keypad ===== */
 .keys{
   width:100%;display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
-  grid-template-rows:repeat(5,54px);
-  grid-auto-rows:54px;
-  gap:10px;
+  grid-template-rows:repeat(5,var(--key-h));
+  row-gap:var(--gap-key);
+  column-gap:clamp(8px,2vw,12px);
 }
 .key{
-  width:100%;height:54px;min-height:54px;max-height:54px;
-  border:0;border-radius:16px;
+  width:100%;height:100%;
+  border:0;border-radius:var(--radius-md);
   background:var(--card);color:var(--text);
-  font-size:26px;font-weight:700;
+  font-size:clamp(20px,6.2vw,26px);font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  touch-action:manipulation;-webkit-touch-callout:none;user-select:none;
+  box-shadow:0 1.5px 0 rgba(128,128,128,.16);
+  transition:transform .08s ease,box-shadow .08s ease,filter .08s ease;
 }
-.key.small{font-size:18px}
-.key.wide{grid-column:1 / -1}
-.key:active{transform:scale(.97);opacity:.78}
-.key[data-k="clear"]{font-size:16px}
+.key:active{
+  transform:translateY(1px) scale(.97);
+  filter:brightness(.92);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.20);
+}
+.key:focus-visible{outline:2px solid var(--btn);outline-offset:2px}
+
+/* Baris fungsi/simbol memakai teks lebih kecil agar tidak berdesakan */
+.key[data-k="sign"],
+.key[data-k="dot"]{font-size:clamp(16px,4.4vw,19px);font-weight:800}
+
+/* Baris aksi terakhir: Hapus (2 kolom, aksi paling sering dipakai)
+   dan Hapus Semua (1 kolom, ditandai warna agar tidak tersentuh tanpa sengaja) */
+.key[data-k="back"]{
+  grid-column:span 2;
+  font-size:clamp(15px,3.8vw,17px);font-weight:800;
+  gap:6px;
+}
+.key[data-k="clear"]{
+  grid-column:span 1;
+  font-size:clamp(10.5px,2.8vw,12.5px);font-weight:800;
+  color:var(--bad);background:var(--bad-tint);
+  line-height:1.15;text-align:center;padding:2px;
+}
+/* ===== /Keypad ===== */
+
 .draft-status{min-height:13px;text-align:center;color:var(--hint);font-size:10px;line-height:13px}
 .draft-status.saved{color:var(--ok)}
+.note{min-height:13px;height:13px;text-align:center;color:var(--hint);font-size:10px;line-height:13px}
 
-.note{
-  min-height:13px;height:13px;
-  text-align:center;color:var(--hint);
-  font-size:10px;line-height:13px;
-}
-.nav-buttons{
-  display:grid;grid-template-columns:1fr 1.25fr;
-  gap:10px;
-}
-.nav-btn{
-  height:44px;border:0;border-radius:15px;
-  font-size:14px;font-weight:850;
-}
+.nav-buttons{display:grid;grid-template-columns:1fr 1.25fr;gap:clamp(8px,1.8vw,12px)}
+.nav-btn{height:var(--nav-h);min-height:var(--nav-h);border:0;border-radius:15px;font-size:14px;font-weight:850;touch-action:manipulation}
 .nav-btn.prev{background:var(--card);color:var(--text)}
 .nav-btn.next{background:var(--btn);color:var(--btntext)}
 .nav-btn:disabled{opacity:.42}
@@ -143,140 +166,71 @@ button{font:inherit}
 .review{display:none;min-height:0;overflow:visible;padding-top:8px}
 .review.show{display:block}
 .list{background:var(--card);border-radius:16px;padding:0 12px}
-.row{
-  display:grid;grid-template-columns:1fr auto auto;
-  gap:8px;align-items:center;padding:10px 0;
-  border-bottom:1px solid rgba(128,128,128,.18);
-}
+.row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(128,128,128,.18)}
 .row:last-child{border:0}
-.name{min-width:0}.name b{
-  display:block;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;font-size:13px;
-}.name span{font-size:10px;color:var(--hint)}
+.name{min-width:0}.name b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}.name span{font-size:10px;color:var(--hint)}
 .val{font-weight:850}
 .badge{font-size:10px;font-weight:850;min-width:45px;text-align:right}
 .ready{color:var(--ok)}.check{color:var(--warn)}.missing{color:var(--bad)}
 
-@media(max-width:380px){
-  .app{padding-left:12px;padding-right:12px}
-  .parameter-card{min-height:82px}
-  .label{font-size:16px}
-  .param-person{min-width:78px;padding-left:11px}
-  .keys{grid-template-rows:repeat(5,50px);grid-auto-rows:50px;gap:9px}
-  .key{height:50px;min-height:50px;max-height:50px;font-size:25px}
-  .display{height:60px;font-size:36px}
+/* Layar sangat sempit (HP kecil / mode terlipat) */
+@media(max-width:340px){
+  :root{--gap-key:6px;--radius-md:12px}
+  .key{font-size:clamp(18px,7vw,22px)}
+  .key[data-k="back"]{font-size:13px}
+  .key[data-k="clear"]{font-size:10px}
 }
+
+/* Layar lebar (tablet) — batasi lebar keypad agar tombol tidak jadi terlalu besar/jauh dari ibu jari */
 @media(min-width:600px){
-  .app{padding-left:18px;padding-right:18px}
+  .app{padding-left:18px;padding-right:18px;max-width:560px}
 }
 
-/* FINAL VERTICAL SPACING — intentionally generous and visible */
-#entry{display:flex!important;flex-direction:column!important;gap:0!important}
-#entry>.parameter-card{
-  margin:0 0 16px 0!important;
-}
-#entry>.display{
-  margin:0 0 16px 0!important;
-}
-#entry>.keys{
-  margin:0 0 16px 0!important;
-}
-#entry>.note{
-  margin:0 0 10px 0!important;
-}
-#entry>.nav-buttons{
-  margin:0!important;
-}
-.parameter-card{
-  box-shadow:0 0 0 1px rgba(128,128,128,.04);
-}
-.display{
-  box-shadow:0 0 0 1px rgba(128,128,128,.04);
-}
-.keys{
-  row-gap:12px!important;
-}
-@media(max-width:380px){
-  #entry>.parameter-card{margin-bottom:14px!important}
-  #entry>.display{margin-bottom:14px!important}
-  #entry>.keys{margin-bottom:14px!important}
-}
-
-/* OPERATOR UI — DYNAMIC RESPONSIVE LAYOUT
-   Scales with the Telegram Mini App viewport while keeping touch targets usable.
-*/
-:root{
-  --ui-scale:clamp(.88, 100dvh / 760, 1.12);
-  --gap-section:clamp(10px, 2.0dvh, 18px);
-  --gap-key:clamp(7px, 1.35dvh, 13px);
-  --key-h:clamp(46px, 6.6dvh, 60px);
-  --display-h:clamp(56px, 8dvh, 70px);
-  --card-h:clamp(78px, 11dvh, 92px);
-  --nav-h:clamp(40px, 5.8dvh, 48px);
-}
-.app{
-  min-height:100dvh;
-  padding-top:clamp(6px,1.2dvh,12px);
-  padding-bottom:calc(clamp(8px,1.5dvh,16px) + env(safe-area-inset-bottom));
-}
-.progress{margin-top:clamp(3px,.7dvh,6px);margin-bottom:clamp(7px,1.4dvh,12px)}
-.meta{margin-bottom:clamp(7px,1.4dvh,12px)}
-#entry{gap:0!important}
-#entry>.parameter-card{height:var(--card-h)!important;min-height:var(--card-h)!important;margin-bottom:var(--gap-section)!important}
-#entry>.display{height:var(--display-h)!important;min-height:var(--display-h)!important;margin-bottom:var(--gap-section)!important}
-#entry>.keys{margin-bottom:var(--gap-section)!important}
-.keys{
-  grid-template-rows:repeat(5,var(--key-h))!important;
-  grid-auto-rows:var(--key-h)!important;
-  row-gap:var(--gap-key)!important;
-  column-gap:clamp(7px,1.8vw,12px)!important;
-}
-.key,.key.wide{
-  height:var(--key-h)!important;
-  min-height:var(--key-h)!important;
-  max-height:var(--key-h)!important;
-  border-radius:clamp(13px,2vw,18px)!important;
-}
-.display{border-radius:clamp(15px,2.5vw,20px)!important}
-.parameter-card{border-radius:clamp(16px,2.8vw,20px)!important}
-#entry>.note{height:auto!important;min-height:13px!important;margin-bottom:4px!important}
-#entry>.draft-status{margin-bottom:clamp(7px,1.2dvh,11px)!important}
-.nav-btn{height:var(--nav-h)!important;min-height:var(--nav-h)!important}
-.nav-buttons{gap:clamp(8px,1.8vw,12px)!important}
-
-@media (max-height:620px){
+/* Viewport pendek (HP dalam split-screen, browser bar besar, dsb.) */
+@media(max-height:620px){
   :root{
-    --gap-section:10px;
-    --gap-key:7px;
-    --key-h:46px;
-    --display-h:56px;
-    --card-h:78px;
-    --nav-h:40px;
-  }
-}
-@media (min-height:900px){
-  :root{
-    --gap-section:18px;
-    --gap-key:13px;
-    --key-h:60px;
-    --display-h:70px;
-    --card-h:92px;
-    --nav-h:48px;
-  }
-}
-@media (orientation:landscape){
-  .app{max-width:700px}
-  #entry>.parameter-card{margin-bottom:10px!important}
-  #entry>.display{margin-bottom:10px!important}
-  #entry>.keys{margin-bottom:10px!important}
-  :root{
-    --gap-key:7px;
-    --key-h:44px;
-    --display-h:54px;
-    --card-h:72px;
+    --gap-section:9px;--gap-key:6px;
+    --key-h:44px;--display-h:52px;--card-h:74px;--nav-h:42px;
   }
 }
 
+/* Viewport tinggi (tablet/desktop) — tombol boleh lebih besar dan lega */
+@media(min-height:900px){
+  :root{
+    --gap-section:18px;--gap-key:13px;
+    --key-h:64px;--display-h:72px;--card-h:94px;--nav-h:50px;
+  }
+}
+
+/* Landscape di HP: ruang vertikal sempit, keypad tetap harus muat tanpa scroll */
+@media(orientation:landscape) and (max-height:500px){
+  .app{max-width:720px}
+  :root{
+    --gap-section:8px;--gap-key:6px;
+    --key-h:40px;--display-h:46px;--card-h:64px;--nav-h:38px;
+  }
+  .keys{max-width:360px;margin-inline:auto}
+}
+
+/* Perangkat tanpa hover kasar (mouse) mendapat efek hover halus, disembunyikan di layar sentuh */
+@media(hover:hover) and (pointer:fine){
+  .key:hover{
+    filter:brightness(.95);
+    box-shadow:inset 0 1px 3px rgba(0,0,0,.12);
+    transform:translateY(.5px);
+  }
+  .key:hover:active{
+    filter:brightness(.90);
+    box-shadow:inset 0 2px 5px rgba(0,0,0,.22);
+    transform:translateY(1px) scale(.97);
+  }
+  .nav-btn:not(:disabled):hover{filter:brightness(0.97)}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .key,.nav-btn{transition:none}
+  .key:active,.nav-btn:active{transform:none}
+}
 </style>
 </head>
 <body>
@@ -300,12 +254,20 @@ button{font:inherit}
 </div>
     <div class="display empty" id="display">0</div>
     <div class="keys">
-      <button class="key" data-k="1">1</button><button class="key" data-k="2">2</button><button class="key" data-k="3">3</button>
-      <button class="key" data-k="4">4</button><button class="key" data-k="5">5</button><button class="key" data-k="6">6</button>
-      <button class="key" data-k="7">7</button><button class="key" data-k="8">8</button><button class="key" data-k="9">9</button>
-      <button class="key small" data-k="sign">±</button><button class="key" data-k="0">0</button><button class="key small" data-k="dot">,</button>
-      <button class="key small wide" data-k="back">⌫ Hapus</button>
-      <button class="key small wide" data-k="clear">↺ Hapus Semua</button>
+      <button class="key" data-k="1" aria-label="Angka 1">1</button>
+      <button class="key" data-k="2" aria-label="Angka 2">2</button>
+      <button class="key" data-k="3" aria-label="Angka 3">3</button>
+      <button class="key" data-k="4" aria-label="Angka 4">4</button>
+      <button class="key" data-k="5" aria-label="Angka 5">5</button>
+      <button class="key" data-k="6" aria-label="Angka 6">6</button>
+      <button class="key" data-k="7" aria-label="Angka 7">7</button>
+      <button class="key" data-k="8" aria-label="Angka 8">8</button>
+      <button class="key" data-k="9" aria-label="Angka 9">9</button>
+      <button class="key" data-k="sign" aria-label="Ubah tanda plus minus">±</button>
+      <button class="key" data-k="0" aria-label="Angka 0">0</button>
+      <button class="key" data-k="dot" aria-label="Titik desimal">,</button>
+      <button class="key" data-k="back" aria-label="Hapus satu digit terakhir">⌫ Hapus</button>
+      <button class="key" data-k="clear" aria-label="Hapus semua nilai">↺ Semua</button>
     </div>
     <div class="note" id="note"></div>
     <div class="draft-status" id="draftStatus"></div>
@@ -319,6 +281,9 @@ button{font:inherit}
 </div>
 <script>
 (()=>{"use strict";
+// iOS Safari/WKWebView tidak akan menerapkan :active saat tap kecuali ada listener
+// touch terpasang di dokumen — tanpa ini efek "ditekan" di CSS tidak pernah muncul di HP.
+document.addEventListener("touchstart",()=>{},{passive:true});
 const tg=window.Telegram?.WebApp||null, qs=new URLSearchParams(location.search);
 const parse=(s,f)=>{try{return JSON.parse(s||"")||f}catch(e){return f}};
 let params=parse(qs.get("params"),[]), meta=parse(qs.get("meta"),{});
