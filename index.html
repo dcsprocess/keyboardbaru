@@ -394,7 +394,7 @@ function render(){
  std.textContent=p.stdText||((p.stdMin!=null&&p.stdMax!=null)?("Standar: "+p.stdMin+" – "+p.stdMax+(p.satuan?" "+p.satuan:"")):"");
 state.textContent="";state.className="state";
 if(n!==null&&p.stdMin!=null&&p.stdMax!=null){ const lo=Number(p.stdMin),hi=Number(p.stdMax); if(Number.isFinite(lo)&&Number.isFinite(hi)&&(n<lo||n>hi)){ state.className="state warn";state.textContent="⚠ Di luar standar — tetap bisa disimpan"; }}
- $("note").textContent=params.length>1?"Nilai tersimpan saat berpindah parameter. Ketuk chip di atas untuk lompat langsung.":"Isi nilai, lalu Review & Kirim.";
+ $("note").textContent=params.length>1?"Ketuk chip di atas untuk lompat langsung.":"Isi nilai, lalu Review & Kirim.";
 if(prevBtn){prevBtn.disabled=i===0;}
 if(nextBtn){nextBtn.textContent=i===params.length-1?"Review & Kirim":"Lanjut ›";}
 renderChips();
