@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Operator Input — Tombol Aman</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  color-scheme:light dark;
+  --bg:var(--tg-theme-bg-color,#fff);
+  --card:var(--tg-theme-secondary-bg-color,#f2f2f7);
+  --text:var(--tg-theme-text-color,#111);
+  --hint:var(--tg-theme-hint-color,#777);
+  --btn:var(--tg-theme-button-color,#2481cc);
+  --btntext:var(--tg-theme-button-text-color,#fff);
+  --accent:#0d8f6e; --accent-tint:rgba(13,143,110,.12);
+  --ok:#0d8f6e;--warn:#c07a12;--bad:#d93025;--bad-tint:rgba(217,48,37,.10);
+  --gap:clamp(10px,1.8dvh,16px);
+  --key-h:clamp(64px,10dvh,88px);
+  --disp-h:clamp(50px,7dvh,62px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;overflow-x:hidden}body{min-height:100dvh}
+button{font:inherit}
+.app{width:100%;max-width:520px;margin:0 auto;min-height:100dvh;background:var(--bg);padding:clamp(7px,1.4dvh,12px) 14px 10px}
+
+.head{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;min-height:40px}
+.head button{border:0;background:transparent;color:var(--accent);font-size:14px;font-weight:800;padding:8px 2px}
+.head .cancel{color:var(--bad)}
+.title{text-align:center;font-weight:850;font-size:15px}
+.sub{text-align:center;color:var(--hint);font-size:11px;margin-top:1px}
+.progress{height:5px;background:var(--card);border-radius:99px;overflow:hidden;margin:8px 0 10px}
+.progress>i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
+.meta{display:flex;flex-wrap:wrap;gap:4px 10px;background:var(--card);border-radius:14px;padding:8px 11px;margin-bottom:10px;font-size:10px;color:var(--hint)}
+.meta b{color:var(--text)}
+
+.card{background:var(--card);border-radius:16px;padding:10px 14px}
+.label{font-size:16px;font-weight:850}
+.unit{font-size:10.5px;color:var(--hint);margin-top:2px}
+.std{font-size:10.5px;margin-top:4px;color:var(--hint)}
+.state{font-size:11.5px;font-weight:800;min-height:14px;margin-top:3px}
+.state.ok{color:var(--ok)}.state.warn{color:var(--warn)}.state.bad{color:var(--bad)}
+
+.display{margin-top:8px;height:var(--disp-h);border-radius:12px;background:var(--bg);box-shadow:inset 0 0 0 1px rgba(128,128,128,.12);display:flex;align-items:center;justify-content:center;font-size:clamp(24px,7vw,32px);font-weight:850;font-variant-numeric:tabular-nums}
+.display.empty{color:var(--hint);font-weight:600}
+
+/* ===== Tombol angka dibuat besar agar pas untuk jempol/jari ===== */
+.keys{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(4,var(--key-h));row-gap:clamp(7px,1.5dvh,12px);column-gap:clamp(8px,2vw,12px);margin-top:clamp(9px,1.6dvh,13px)}
+.key{border:0;border-radius:18px;background:var(--card);color:var(--text);font-size:clamp(28px,8.5vw,36px);font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 0 rgba(128,128,128,.16);touch-action:manipulation;user-select:none;-webkit-user-select:none;transition:transform .08s ease,filter .08s ease,box-shadow .08s ease}
+.key:active,.key.pressed{transform:translateY(2px) scale(.965);filter:brightness(.90);box-shadow:inset 0 2px 6px rgba(0,0,0,.18)}
+.key[data-k="sign"],.key[data-k="dot"]{font-size:clamp(24px,7vw,30px);font-weight:800;color:var(--accent)}
+
+/* ===== Zona hapus — ikon saja, sengaja dipisah jauh dari keypad angka ===== */
+.danger-zone{margin-top:clamp(10px,1.8dvh,14px);padding-top:clamp(8px,1.4dvh,10px);border-top:1px dashed rgba(128,128,128,.25);display:grid;grid-template-columns:1fr 1fr;gap:clamp(12px,5vw,22px)}
+.icon-btn{width:100%;height:58px;border-radius:18px;border:0;display:flex;align-items:center;justify-content:center;font-size:25px;position:relative;overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation;transition:transform .08s ease,filter .08s ease,box-shadow .08s ease}
+.backspace-btn{background:var(--card);color:var(--text)}
+.backspace-btn:active,.backspace-btn.pressed{transform:scale(.97);filter:brightness(.92);box-shadow:inset 0 2px 6px rgba(0,0,0,.16)}
+.clear-btn{background:transparent;color:var(--bad);box-shadow:inset 0 0 0 2px var(--bad-tint)}
+.clear-btn .ic{position:relative;z-index:1}
+.clear-btn .fill{position:absolute;left:0;top:0;bottom:0;width:0%;background:var(--bad-tint);z-index:0;transition:none}
+.clear-btn.armed{box-shadow:inset 0 0 0 2px var(--bad),0 0 0 2px rgba(217,48,37,.08)}
+@keyframes pulse-ring{0%,100%{box-shadow:inset 0 0 0 2px var(--bad-tint)}50%{box-shadow:inset 0 0 0 2px var(--bad)}}
+.clear-btn:not(.armed){animation:pulse-ring 2.4s ease-in-out infinite}
+
+.nav-buttons{display:grid;grid-template-columns:1fr 1.25fr;gap:10px;margin-top:12px}
+.nav-btn{height:48px;border:0;border-radius:14px;font-size:24px;font-weight:850;display:flex;align-items:center;justify-content:center}
+.nav-btn.prev{background:var(--card);color:var(--text)}
+.nav-btn.prev:disabled{opacity:.4}
+.nav-btn.next{background:var(--accent);color:#fff}
+.nav-btn:active{transform:scale(.98)}
+
+.review{display:none}
+.review.show{display:block}
+.list{background:var(--card);border-radius:16px;padding:0 12px;margin-top:10px}
+.row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:11px 0;border-bottom:1px solid rgba(128,128,128,.16)}
+.row:last-child{border:0}
+.row b{display:block;font-size:13.5px}
+.row .u{font-size:10.5px;color:var(--hint)}
+.row .v{font-weight:850}
+.badge{font-size:10px;font-weight:850}
+.badge.ready{color:var(--ok)}.badge.missing{color:var(--bad)}
+.send-btn{width:100%;height:52px;border:0;border-radius:14px;background:var(--accent);color:#fff;font-size:22px;font-weight:850;margin-top:14px;display:flex;align-items:center;justify-content:center}
+.send-btn:disabled{opacity:.4}
+
+.snackbar{position:fixed;left:16px;right:16px;bottom:20px;max-width:488px;margin:0 auto;background:var(--text);color:var(--bg);border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;font-weight:700;transform:translateY(120%);transition:transform .25s;z-index:9}
+.snackbar.show{transform:translateY(0)}
+.snackbar button{border:0;background:transparent;color:#8ecbff;font-weight:850;font-size:13px;padding:4px}
+
+/* Layar pendek: tombol angka tetap besar, elemen lain dipadatkan */
+@media(max-height:680px){
+  :root{--key-h:clamp(56px,8.6dvh,72px);--disp-h:clamp(44px,6dvh,54px)}
+  .meta{padding:6px 10px;margin-bottom:6px}
+  .card{padding:8px 12px}
+  .danger-zone{margin-top:10px;padding-top:8px}
+  .clearwrap{margin-top:7px}
+  .nav-buttons{margin-top:9px}
+}
+
+.key:focus-visible,.icon-btn:focus-visible,.nav-btn:focus-visible,.head button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(max-width:340px){
+  :root{--gap:8px;--key-h:58px}
+  .key{border-radius:15px;font-size:clamp(25px,8vw,32px)}
+  .icon-btn{height:54px;border-radius:16px}
+}
+@media(orientation:landscape) and (max-height:520px){
+  :root{--key-h:46px;--disp-h:44px}
+  .app{max-width:700px}
+  .keys{max-width:390px;margin-left:auto;margin-right:auto}
+  .danger-zone{max-width:390px;margin-left:auto;margin-right:auto}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="head"><button class="cancel" id="cancel" aria-label="Batal">✕</button><div><div class="title" id="title">Input Operator</div><div class="sub" id="sub">1 / 1</div></div><button id="reviewBtn" aria-label="Ringkas">📋</button></div>
+  <div class="progress"><i id="bar"></i></div>
+  <div class="meta" id="meta"></div>
+
+  <section id="entry">
+    <div class="card">
+      <div class="label" id="label">Nilai</div>
+      <div class="unit" id="unit"></div>
+      <div class="std" id="std"></div>
+      <div class="state" id="state"></div>
+      <div class="display empty" id="display">0</div>
+    </div>
+
+    <div class="keys">
+      <button class="key" data-k="7">7</button><button class="key" data-k="8">8</button><button class="key" data-k="9">9</button>
+      <button class="key" data-k="4">4</button><button class="key" data-k="5">5</button><button class="key" data-k="6">6</button>
+      <button class="key" data-k="1">1</button><button class="key" data-k="2">2</button><button class="key" data-k="3">3</button>
+      <button class="key" data-k="sign">±</button><button class="key" data-k="0">0</button><button class="key" data-k="dot">,</button>
+    </div>
+
+    <div class="danger-zone">
+      <button class="icon-btn clear-btn" id="clearBtn" aria-label="Tahan untuk hapus semua angka"><div class="fill" id="clearFill"></div><span class="ic" id="clearIcon">🗑️</span></button>
+      <button class="icon-btn backspace-btn" id="backspaceBtn" aria-label="Hapus satu angka terakhir">⌫</button>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn prev" id="prevBtn" aria-label="Kembali">‹</button>
+      <button class="nav-btn next" id="nextBtn" aria-label="Lanjut">›</button>
+    </div>
+  </section>
+
+  <section class="review" id="review">
+    <div class="list" id="list"></div>
+    <button class="send-btn" id="sendBtn" aria-label="Kirim semua">✅</button>
+  </section>
+</div>
+
+<div class="snackbar" id="snackbar"><span id="snackMsg">Angka dihapus</span><button id="undoBtn" aria-label="Urungkan">↩️</button></div>
+
+<script>
+(()=>{"use strict";
+document.addEventListener("touchstart",()=>{},{passive:true});
+const tg=window.Telegram?.WebApp||null, qs=new URLSearchParams(location.search);
+const parse=(s,f)=>{try{return JSON.parse(s||"")||f}catch(e){return f}};
+let params=parse(qs.get("params"),[]), meta=parse(qs.get("meta"),{});
+params=Array.isArray(params)?params.map(p=>({key:String(p.key||""),label:String(p.label||p.key||"Nilai"),satuan:String(p.satuan||""),stdMin:p.stdMin??p.min??null,stdMax:p.stdMax??p.max??null,stdText:String(p.stdText||p.std||"")})).filter(p=>p.key):[];
+if(!params.length)params=[{key:"nilai",label:"Nilai",satuan:""}];
+let i=0, vals=params.map(()=>""), neg=params.map(()=>false), review=false;
+let lastCleared=null; // {i, val, neg} untuk urungkan
+const $=x=>document.getElementById(x);
+if(tg){tg.ready();tg.expand()}
+function h(t){try{tg?.HapticFeedback?.impactOccurred(t||"light")}catch(e){}}
+
+const draftKey=(()=>{const stable={params:params.map(p=>p.key),meta};let s="draftTA:"+JSON.stringify(stable),hh=0;for(let k=0;k<s.length;k++)hh=((hh<<5)-hh+s.charCodeAt(k))|0;return "draftTA:"+Math.abs(hh)})();
+function saveDraft(){try{localStorage.setItem(draftKey,JSON.stringify({vals,neg,i}))}catch(e){}}
+function restoreDraft(){try{const d=JSON.parse(localStorage.getItem(draftKey)||"null");if(!d||!Array.isArray(d.vals)||d.vals.length!==params.length)return;if(!d.vals.some(v=>String(v||"").length))return;vals=d.vals.map(String);neg=params.map((_,j)=>!!(d.neg&&d.neg[j]));if(Number.isInteger(d.i))i=Math.max(0,Math.min(params.length-1,d.i))}catch(e){}}
+function clearDraft(){try{localStorage.removeItem(draftKey)}catch(e){}}
+function raw(j=i){return (neg[j]?"-":"")+vals[j]}
+function num(j=i){if(!vals[j])return null;const n=parseFloat(raw(j));return Number.isFinite(n)?n:null}
+
+function renderMeta(){const keys=[["tanggal","Tanggal"],["jam","Jam"],["shift","Shift"],["grup","Grup"],["nama_operator","Operator"],["supervisor","SPV"]];$("meta").innerHTML=keys.filter(x=>meta[x[0]]).map(x=>"<span>"+x[1]+": <b>"+String(meta[x[0]])+"</b></span>").join("")}
+
+function render(){
+  if(review)return;
+  const p=params[i], n=num();
+  $("label").textContent=p.label; $("unit").textContent=p.satuan?"Satuan: "+p.satuan:"";
+  $("sub").textContent=(i+1)+" / "+params.length; $("bar").style.width=((i+1)/params.length*100)+"%";
+  const disp=$("display"); disp.textContent=vals[i]?raw():"0"; disp.classList.toggle("empty",!vals[i]);
+  $("std").textContent=p.stdText||((p.stdMin!=null&&p.stdMax!=null)?("Standar: "+p.stdMin+" – "+p.stdMax+(p.satuan?" "+p.satuan:"")):"");
+  const st=$("state"); st.className="state";
+  if(n!==null&&p.stdMin!=null&&p.stdMax!=null){const lo=Number(p.stdMin),hi=Number(p.stdMax);if(Number.isFinite(lo)&&Number.isFinite(hi)){if(n<lo||n>hi){st.classList.add("warn");st.textContent="⚠ Di luar standar — tetap bisa disimpan"}else{st.classList.add("ok");st.textContent="✓ Sesuai standar"}}else st.textContent=""}else st.textContent="";
+  $("prevBtn").disabled=i===0;
+  $("nextBtn").textContent=i===params.length-1?"📋":"›";
+  updateClearState();
+}
+function updateClearState(){
+  const empty=!vals[i];
+  $("clearBtn").style.opacity=empty?"0.45":"1";
+  $("clearBtn").style.pointerEvents=empty?"none":"auto";
+}
+function next(){if(num()===null){h("rigid");const st=$("state");st.className="state bad";st.textContent="❌ Nilai belum diisi";return}if(i<params.length-1){i++;saveDraft();render()}else{saveDraft();showReview(true)}}
+function back(){if(review){showReview(false);return}if(i){i--;render()}}
+function showReview(on){review=on;$("entry").style.display=on?"none":"block";$("review").classList.toggle("show",on);$("title").textContent=on?"Periksa Laporan":"Input Operator";$("reviewBtn").textContent=on?"✏️":"📋";if(on){renderList()}else{render()}}
+function renderList(){const list=$("list");list.innerHTML=params.map((p,j)=>{const n=num(j);return '<div class="row"><div><b>'+(j+1)+". "+p.label+'</b><span class="u">'+p.satuan+'</span></div><div class="v">'+(n===null?"—":n)+'</div><div class="badge '+(n===null?"missing":"ready")+'">'+(n===null?"KOSONG":"SIAP")+'</div></div>'}).join("");$("sendBtn").disabled=!params.every((_,j)=>num(j)!==null)}
+function finish(){for(let j=0;j<params.length;j++)if(num(j)===null){i=j;showReview(false);h("rigid");return}const values={};params.forEach((p,j)=>values[p.key]=String(num(j)));clearDraft();h("medium");tg?.sendData(JSON.stringify({action:"submit",values}))}
+
+/* ===== Tactile feedback: sentuhan terasa langsung di Telegram WebApp ===== */
+document.querySelectorAll(".key,.icon-btn,.nav-btn").forEach(b=>{
+  b.addEventListener("pointerdown",()=>b.classList.add("pressed"),{passive:true});
+  ["pointerup","pointercancel","pointerleave"].forEach(ev=>
+    b.addEventListener(ev,()=>b.classList.remove("pressed"),{passive:true})
+  );
+});
+
+/* ===== Backspace: tap sekali, hapus 1 digit — aman, risiko rendah ===== */
+$("backspaceBtn").onclick=()=>{
+  if(!vals[i])return;
+  vals[i]=vals[i].slice(0,-1); if(!vals[i])neg[i]=false;
+  h(); saveDraft(); render();
+};
+
+/* ===== Hapus Semua: harus tekan-tahan, ada animasi & bisa diurungkan ===== */
+let holdTimer=null, holdStart=0, holding=false;
+const HOLD_MS=700;
+function startHold(){
+  if(holding)return;
+  if(!vals[i])return;
+  holding=true; holdStart=Date.now();
+  h("light");
+  $("clearBtn").classList.add("armed");
+  $("clearIcon").textContent="⏳";
+  cancelAnimationFrame(startHold._raf);
+  const tick=()=>{
+    if(!holding)return;
+    const pct=Math.min(100,(Date.now()-holdStart)/HOLD_MS*100);
+    $("clearFill").style.width=pct+"%";
+    if(pct>=100){ doClearAll(); return; }
+    startHold._raf=requestAnimationFrame(tick);
+  };
+  tick();
+}
+function cancelHold(){
+  if(!holding)return;
+  holding=false;
+  cancelAnimationFrame(startHold._raf);
+  $("clearBtn").classList.remove("armed");
+  $("clearIcon").textContent="🗑️";
+  $("clearFill").style.width="0%";
+}
+function doClearAll(){
+  holding=false;
+  lastCleared={i, val:vals[i], neg:neg[i]};
+  vals[i]=""; neg[i]=false;
+  h("rigid");
+  $("clearBtn").classList.remove("armed");
+  $("clearIcon").textContent="🗑️";
+  $("clearFill").style.width="0%";
+  saveDraft(); render();
+  showSnackbar();
+}
+["mousedown","touchstart"].forEach(ev=>$("clearBtn").addEventListener(ev,e=>{e.preventDefault();startHold()},{passive:false}));
+["mouseup","mouseleave","touchend","touchcancel"].forEach(ev=>$("clearBtn").addEventListener(ev,cancelHold));
+
+function showSnackbar(){
+  $("snackMsg").textContent="Semua angka untuk \""+params[lastCleared.i].label+"\" dihapus";
+  $("snackbar").classList.add("show");
+  clearTimeout(showSnackbar._tm);
+  showSnackbar._tm=setTimeout(()=>$("snackbar").classList.remove("show"),5000);
+}
+$("undoBtn").onclick=()=>{
+  if(!lastCleared)return;
+  vals[lastCleared.i]=lastCleared.val; neg[lastCleared.i]=lastCleared.neg;
+  lastCleared=null;
+  $("snackbar").classList.remove("show");
+  h(); saveDraft();
+  if(!review) render(); else renderList();
+};
+
+$("cancel").onclick=()=>tg?.sendData(JSON.stringify({action:"cancel"}));
+$("reviewBtn").onclick=()=>showReview(!review);
+$("prevBtn").onclick=back;
+$("nextBtn").onclick=next;
+$("sendBtn").onclick=finish;
+document.querySelectorAll(".keys .key").forEach(b=>b.onclick=()=>{
+  const k=b.dataset.k;
+  if(k==="dot"){if(!vals[i].includes("."))vals[i]=(vals[i]||"0")+"."}
+  else if(k==="sign"){if(vals[i])neg[i]=!neg[i]}
+  else if(vals[i].length<10){vals[i]=vals[i]==="0"?k:vals[i]+k}
+  h(); saveDraft(); render();
+});
+window.addEventListener("keydown",e=>{
+  if(review)return;
+  if(e.key==="Enter"){e.preventDefault();next()}
+  else if(e.key==="Backspace"){e.preventDefault();vals[i]=vals[i].slice(0,-1);if(!vals[i])neg[i]=false;saveDraft();render()}
+  else if(/^\d$/.test(e.key)){vals[i]=(vals[i]==="0"?e.key:vals[i]+e.key).slice(0,10);saveDraft();render()}
+  else if(e.key==="."||e.key===","){if(!vals[i].includes("."))vals[i]=(vals[i]||"0")+".";saveDraft();render()}
+  else if(e.key==="-"){neg[i]=!neg[i];saveDraft();render()}
+});
+
+renderMeta();restoreDraft();render();showReview(false);
+tg?.MainButton?.hide();
+})();
+</script>
+</body>
+</html>
