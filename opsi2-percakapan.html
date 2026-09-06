@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Operator Input — Percakapan</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --bg:var(--tg-theme-bg-color,#fff);
+  --card:var(--tg-theme-secondary-bg-color,#f2f2f7);
+  --text:var(--tg-theme-text-color,#111);
+  --hint:var(--tg-theme-hint-color,#777);
+  --btntext:var(--tg-theme-button-text-color,#fff);
+  --accent:#1f8a70; --accent-tint:rgba(31,138,112,.12);
+  --ok:#1f8a70;--warn:#c07a12;--bad:#d93025;--bad-tint:rgba(217,48,37,.10);
+  --key-h:clamp(46px,7dvh,58px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;overflow-x:hidden}
+button{font:inherit}
+.app{width:100%;max-width:520px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+.topbar{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:10px 14px 6px;position:sticky;top:0;background:var(--bg);z-index:3}
+.topbar button{border:0;background:transparent;color:var(--accent);font-size:14px;font-weight:800;padding:8px 2px}
+.topbar .cancel{color:var(--bad)}
+.topbar .title{text-align:center;font-weight:850;font-size:15px}
+.progresswrap{padding:0 14px 8px}
+.progress{height:4px;background:var(--card);border-radius:99px;overflow:hidden}
+.progress>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+
+.thread{flex:1;overflow-y:auto;padding:6px 14px 10px;display:flex;flex-direction:column;gap:10px}
+.bubble{max-width:86%;padding:11px 14px;border-radius:16px;font-size:14.5px;line-height:1.35;animation:pop .22s ease}
+@keyframes pop{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
+.bubble.bot{align-self:flex-start;background:var(--card);border-bottom-left-radius:4px}
+.bubble.bot .std{margin-top:5px;font-size:11px;color:var(--hint)}
+.bubble.me{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px;font-weight:800;font-variant-numeric:tabular-nums}
+.bubble.me .u{font-weight:600;font-size:10.5px;opacity:.85;display:block;margin-top:2px}
+.bubble.warn{align-self:flex-start;background:var(--bad-tint);color:var(--bad);font-size:12.5px;font-weight:700;border-radius:14px}
+.bubble.sys{align-self:center;background:transparent;color:var(--hint);font-size:11px;text-align:center}
+.bubble.summary{align-self:stretch;max-width:100%;background:var(--card);border-radius:16px}
+.summary .row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(128,128,128,.15);font-size:13px}
+.summary .row:last-child{border:0}
+.summary .row b{display:block;font-size:12.5px}
+.summary .row span.u{color:var(--hint);font-size:10px}
+.summary .badge{font-size:10px;font-weight:850}
+.badge.ready{color:var(--ok)}.badge.missing{color:var(--bad)}
+
+.composer{border-top:1px solid rgba(128,128,128,.15);padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:var(--bg)}
+.readline{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:14px;padding:10px 14px;margin-bottom:10px;min-height:24px}
+.readline .val{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.readline .val.empty{color:var(--hint);font-weight:500}
+.readline .lbl{font-size:11px;color:var(--hint)}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,var(--key-h));row-gap:8px;column-gap:8px}
+.key{border:0;border-radius:12px;background:var(--card);color:var(--text);font-size:clamp(18px,5.6vw,22px);font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1.5px 0 rgba(128,128,128,.14)}
+.key:active{transform:translateY(1px) scale(.96);filter:brightness(.9)}
+.key[data-k="sign"],.key[data-k="dot"]{font-size:16px;font-weight:800;color:var(--accent)}
+.key[data-k="back"]{grid-column:span 2;font-size:14px;font-weight:800}
+.key[data-k="clear"]{font-size:10.5px;font-weight:800;color:var(--bad);background:var(--bad-tint)}
+.send-row{display:flex;gap:8px;margin-top:10px}
+.send-row button{flex:1;height:46px;border:0;border-radius:12px;font-size:14px;font-weight:850}
+.send-row .editbtn{background:var(--card);color:var(--text)}
+.send-row .okbtn{background:var(--accent);color:#fff}
+.send-row .okbtn:disabled{opacity:.4}
+
+.done-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:40px 20px;text-align:center}
+.done-check{width:56px;height:56px;border-radius:50%;background:var(--accent-tint);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:28px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar"><button class="cancel" id="cancel">❌ Batal</button><div class="title" id="title">Input Operator</div><button id="reviewBtn">Ringkas</button></div>
+  <div class="progresswrap"><div class="progress"><i id="bar"></i></div></div>
+  <div class="thread" id="thread"></div>
+  <div class="composer" id="composer">
+    <div class="readline"><div><div class="lbl" id="curLabel">Nilai</div><div class="val empty" id="curVal">0</div></div><div class="lbl" id="curUnit"></div></div>
+    <div class="keys">
+      <button class="key" data-k="1">1</button><button class="key" data-k="2">2</button><button class="key" data-k="3">3</button>
+      <button class="key" data-k="4">4</button><button class="key" data-k="5">5</button><button class="key" data-k="6">6</button>
+      <button class="key" data-k="7">7</button><button class="key" data-k="8">8</button><button class="key" data-k="9">9</button>
+      <button class="key" data-k="sign">±</button><button class="key" data-k="0">0</button><button class="key" data-k="dot">,</button>
+      <button class="key" data-k="back">⌫ Hapus</button><button class="key" data-k="clear">↺ Semua</button>
+    </div>
+    <div class="send-row"><button class="editbtn" id="backBtn">‹ Sebelumnya</button><button class="okbtn" id="sendKey">Kirim jawaban ›</button></div>
+  </div>
+</div>
+<script>
+(()=>{"use strict";
+document.addEventListener("touchstart",()=>{},{passive:true});
+const tg=window.Telegram?.WebApp||null, qs=new URLSearchParams(location.search);
+const parse=(s,f)=>{try{return JSON.parse(s||"")||f}catch(e){return f}};
+let params=parse(qs.get("params"),[]), meta=parse(qs.get("meta"),{});
+params=Array.isArray(params)?params.map(p=>({key:String(p.key||""),label:String(p.label||p.key||"Nilai"),satuan:String(p.satuan||""),stdMin:p.stdMin??p.min??null,stdMax:p.stdMax??p.max??null,stdText:String(p.stdText||p.std||"")})).filter(p=>p.key):[];
+if(!params.length)params=[{key:"nilai",label:"Nilai",satuan:""}];
+let i=0, vals=params.map(()=>""), neg=params.map(()=>false), answered=params.map(()=>false), review=false, done=false;
+const $=x=>document.getElementById(x);
+if(tg){tg.ready();tg.expand()}
+function h(t){try{tg?.HapticFeedback?.impactOccurred(t||"light")}catch(e){}}
+
+const draftKey=(()=>{const stable={params:params.map(p=>p.key),meta};let s="draftPC:"+JSON.stringify(stable),hh=0;for(let k=0;k<s.length;k++)hh=((hh<<5)-hh+s.charCodeAt(k))|0;return "draftPC:"+Math.abs(hh)})();
+function saveDraft(){try{localStorage.setItem(draftKey,JSON.stringify({vals,neg,answered,i}))}catch(e){}}
+function restoreDraft(){try{const d=JSON.parse(localStorage.getItem(draftKey)||"null");if(!d||!Array.isArray(d.vals)||d.vals.length!==params.length)return;if(!d.vals.some(v=>String(v||"").length))return;vals=d.vals.map(String);neg=params.map((_,j)=>!!(d.neg&&d.neg[j]));answered=params.map((_,j)=>!!(d.answered&&d.answered[j]));if(Number.isInteger(d.i))i=Math.max(0,Math.min(params.length-1,d.i))}catch(e){}}
+function clearDraft(){try{localStorage.removeItem(draftKey)}catch(e){}}
+function raw(j){return (neg[j]?"-":"")+vals[j]}
+function num(j){if(!vals[j])return null;const n=parseFloat(raw(j));return Number.isFinite(n)?n:null}
+
+function botBubble(p){
+  const std=p.stdText||((p.stdMin!=null&&p.stdMax!=null)?("Standar "+p.stdMin+"–"+p.stdMax+(p.satuan?" "+p.satuan:"")):"");
+  return '<div class="bubble bot">Berapa nilai untuk <b>'+p.label+'</b>'+(p.satuan?" ("+p.satuan+")":"")+"?"+(std?'<div class="std">'+std+'</div>':'')+'</div>';
+}
+function meBubble(j){const p=params[j];return '<div class="bubble me">'+num(j)+'<span class="u">'+p.label+(p.satuan?" · "+p.satuan:"")+'</span></div>'}
+
+function buildThreadUpTo(idx){
+  let html='<div class="bubble sys">Halo '+(meta.nama_operator||meta.operator||"Operator")+', mari isi laporan hari ini.</div>';
+  for(let j=0;j<idx;j++){html+=botBubble(params[j]);if(answered[j])html+=meBubble(j)}
+  html+=botBubble(params[idx]);
+  $("thread").innerHTML=html;
+  $("thread").scrollTop=$("thread").scrollHeight;
+}
+function renderMetaTitle(){ $("title").textContent = params.length>1 ? ("Pertanyaan "+(i+1)+" / "+params.length) : "Input Operator"; }
+function render(){
+  if(review||done)return;
+  buildThreadUpTo(i);
+  renderMetaTitle();
+  $("bar").style.width=((i+(answered[i]?1:0))/params.length*100)+"%";
+  const p=params[i];
+  $("curLabel").textContent=p.label;
+  $("curUnit").textContent=p.satuan||"";
+  const cv=$("curVal"); cv.textContent=vals[i]?raw(i):"0"; cv.classList.toggle("empty",!vals[i]);
+  $("backBtn").style.visibility=i===0?"hidden":"visible";
+  $("sendKey").textContent=i===params.length-1?"Selesai, tinjau ›":"Kirim jawaban ›";
+}
+function warnBubble(msg){$("thread").insertAdjacentHTML("beforeend",'<div class="bubble warn">'+msg+'</div>');$("thread").scrollTop=$("thread").scrollHeight}
+
+function next(){
+  if(num(i)===null){h("rigid");warnBubble("❌ Isi nilainya dulu ya, belum ada angka.");return}
+  answered[i]=true;h();saveDraft();
+  if(i<params.length-1){i++;render()}else{openReview()}
+}
+function back(){if(i>0){i--;render()}}
+
+function openReview(){
+  review=true;
+  const rows=params.map((p,j)=>{const n=num(j);return '<div class="row"><div><b>'+(j+1)+". "+p.label+'</b><span class="u">'+p.satuan+'</span></div><div>'+(n===null?"—":n)+'</div><div class="badge '+(n===null?"missing":"ready")+'">'+(n===null?"KOSONG":"SIAP")+'</div></div>'}).join("");
+  $("thread").innerHTML='<div class="bubble sys">Semua sudah dijawab. Yuk periksa sekali lagi sebelum dikirim.</div><div class="bubble summary"><div class="summary">'+rows+'</div></div>';
+  $("thread").scrollTop=$("thread").scrollHeight;
+  $("title").textContent="Periksa Ringkasan";
+  $("bar").style.width="100%";
+  $("composer").style.display="none";
+  tg?.MainButton?.setParams({text:"✅ Kirim Semua",is_visible:true,is_active:true});
+  tg?.BackButton?.show();
+  renderSendBar();
+}
+function renderSendBar(){
+  if($("floatSend"))return;
+  const div=document.createElement("div");
+  div.id="floatSend";
+  div.style.cssText="padding:10px 14px calc(10px + env(safe-area-inset-bottom));border-top:1px solid rgba(128,128,128,.15)";
+  const allReady=params.every((_,j)=>num(j)!==null);
+  div.innerHTML='<div class="send-row"><button class="editbtn" id="editAgain">✏️ Edit Jawaban</button><button class="okbtn" id="finalSend" '+(allReady?"":"disabled")+'>✅ Kirim Semua</button></div>';
+  $("app").appendChild(div);
+  $("editAgain").onclick=()=>{review=false;$("floatSend").remove();$("composer").style.display="block";i=0;render()};
+  $("finalSend").onclick=finish;
+}
+function finish(){
+  for(let j=0;j<params.length;j++)if(num(j)===null){review=false;$("floatSend")?.remove();$("composer").style.display="block";i=j;render();h("rigid");return}
+  const values={};params.forEach((p,j)=>values[p.key]=String(num(j)));clearDraft();h("medium");done=true;
+  $("thread").innerHTML='';
+  $("composer").style.display="none";
+  $("floatSend")?.remove();
+  document.querySelector(".app").insertAdjacentHTML("beforeend",'<div class="done-wrap"><div class="done-check">✓</div><div style="font-weight:800;font-size:16px">Laporan terkirim</div><div style="color:var(--hint);font-size:13px">Semua nilai sudah dikirim ke sistem.</div></div>');
+  tg?.sendData(JSON.stringify({action:"submit",values}));
+}
+$("cancel").onclick=()=>tg?.sendData(JSON.stringify({action:"cancel"}));
+$("reviewBtn").onclick=()=>{ if(params.every((_,j)=>answered[j]||num(j)!==null)) openReview(); else warnBubble("Isi semua parameter dulu sebelum meninjau."); };
+$("backBtn").onclick=back;
+$("sendKey").onclick=next;
+document.querySelectorAll(".key").forEach(b=>b.onclick=()=>{const k=b.dataset.k;if(k==="back"){vals[i]=vals[i].slice(0,-1);if(!vals[i])neg[i]=false}else if(k==="clear"){vals[i]="";neg[i]=false}else if(k==="dot"){if(!vals[i].includes("."))vals[i]=(vals[i]||"0")+"."}else if(k==="sign"){if(vals[i])neg[i]=!neg[i]}else if(vals[i].length<10){vals[i]=vals[i]==="0"?k:vals[i]+k}h();saveDraft();render()});
+tg?.BackButton?.onClick(()=>{ if(review){review=false;$("floatSend")?.remove();$("composer").style.display="block";render();tg?.BackButton?.hide()} else back() });
+window.addEventListener("keydown",e=>{if(review||done)return;if(e.key==="Enter"){e.preventDefault();next()}else if(e.key==="Backspace"){e.preventDefault();vals[i]=vals[i].slice(0,-1);if(!vals[i])neg[i]=false;saveDraft();render()}else if(/^\d$/.test(e.key)){vals[i]=(vals[i]==="0"?e.key:vals[i]+e.key).slice(0,10);saveDraft();render()}else if(e.key==="."||e.key===","){if(!vals[i].includes("."))vals[i]=(vals[i]||"0")+".";saveDraft();render()}else if(e.key==="-"){neg[i]=!neg[i];saveDraft();render()}});
+
+restoreDraft();render();
+tg?.MainButton?.hide();
+})();
+</script>
+</body>
+</html>
